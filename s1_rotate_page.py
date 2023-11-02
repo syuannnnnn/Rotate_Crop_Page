@@ -116,6 +116,7 @@ def saveImage(image, now_page):
         now_page -- 頁面 index
     """
     global result_path
+    print("now page is",now_page)
     cv2.imwrite('./{}/{}.png'.format(result_path, now_page), image)
     
 
@@ -151,7 +152,7 @@ def rotate_img(file_path, index) -> bool:
         now_page, bbox = qrcode_finder(left_top)
         IsRightBottom = False
     if bbox is None: return False
-    if now_page == '':
+    if now_page == 'https://tjhsieh.github.io/c/ct/ct2023s/syllabus/index.html':
         now_page = str(index + 1)
         print(f'\nGet information from QR code failed, replace to "{now_page}.png", file path: {file_path}')
         print(f'Warning: It may contained page error, please check it manually')
@@ -196,6 +197,7 @@ if __name__ == '__main__':
     allFileList = os.listdir(target_path)
     for index in tqdm(range(len(allFileList))):
         filePath = target_path + "/" + allFileList[index]
+        print(filePath)
         if not rotate_img(filePath, index):
             errorList.append(allFileList[index])
             
