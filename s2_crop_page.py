@@ -5,7 +5,7 @@
 
 by kyL
 """
-
+import matplotlib.pyplot as plt
 import cv2
 import os, json
 import numpy as np
@@ -130,28 +130,41 @@ def scaleAdjustment(word_img, adjustCentroid=True):
 
     # 計算質心
     cX, cY = topLeftX + word_w // 2, topLeftY + word_h // 2
-    if adjustCentroid:
-        moments = cv2.moments(binary_word_img)
-        if moments["m00"] != 0:
-            cX = int(moments["m10"] / moments["m00"])
-            cY = int(moments["m01"] / moments["m00"])
+    # if adjustCentroid:
+    #     moments = cv2.moments(binary_word_img)
+    #     if moments["m00"] != 0:
+    #         cX = int(moments["m10"] / moments["m00"])
+    #         cY = int(moments["m01"] / moments["m00"])
 
     # 以質心作爲中心點，取得文字所在正方形區域
-    block_size_half = max(
-        abs(cX - topLeftX),
-        abs(topLeftX + word_w - cX),
-        abs(cY - topLeftY),
-        abs(topLeftY + word_h - cY)
-        ) + 10
+    # block_size_half = max(
+    #     abs(cX - topLeftX),
+    #     abs(topLeftX + word_w - cX),
+    #     abs(cY - topLeftY),
+    #     abs(topLeftY + word_h - cY)
+    #     ) + 10
+    # h, w, _ = word_img_copy.shape
+    # left_x = max(0, cX - block_size_half)
+    # right_x = min(w, cX + block_size_half)
+    # top_y = max(0, cY - block_size_half)
+    # bot_y = min(h, cY + block_size_half)
+
     h, w, _ = word_img_copy.shape
-    left_x = max(0, cX - block_size_half)
-    right_x = min(w, cX + block_size_half)
-    top_y = max(0, cY - block_size_half)
-    bot_y = min(h, cY + block_size_half)
+    left_x = max(0, cX - int(200/2))
+    right_x = min(w, cX + int(200/2))
+    top_y = max(0, cY - int(200/2))
+    bot_y = min(h, cY + int(200/2))
 
     finalWordImg = word_img_copy[top_y:bot_y, left_x:right_x]
-
+    # sourceFile = open('demo.txt', 'w')
+    # print(max(word_w,word_h))
     return cv2.resize(finalWordImg, (300, 300), interpolation=cv2.INTER_AREA)
+
+    ###### draw bounding box
+    # print(word_w,word_h)
+    # word_img_copy = cv2.rectangle(word_img_copy, (cX-1, cY-1), (cX+1, cY+1), (255, 0, 0), 2)
+    # return cv2.rectangle(word_img_copy, (topLeftX, topLeftY), (topLeftX+word_w, topLeftY+word_h), (255, 0, 0), 2)
+    ######
 
 def setPointImageFromPath(args) -> str:
     """主程式，用於辨識並切割稿紙
@@ -239,6 +252,7 @@ def setPointImageFromPath(args) -> str:
 
     # 處理此頁面的每個字
     for j in range(10):
+        # max_length_array = []
         # calculate Y coordinate 
         y1 = int(result[0][1] + j * (block + mid))
         y2 = int(y1 + block)
@@ -285,13 +299,22 @@ def setPointImageFromPath(args) -> str:
                 finalWordImg = scaleAdjustment(word_img, adjustCentroid=adjustCentroid)
                 savePNG(finalWordImg,\
                         index, now_page, IM_DIR, unicode)
+                # max_length_array.append(max_length)
+                # print(max_length_array)
             else:
                 if word_img.shape[0] == 0 or word_img.shape[1] == 0:
                     return f'CropError: {now_page}, code_{str(unicode[index-1])}'
                 savePNG(cv2.resize(word_img, (300, 300), interpolation=cv2.INTER_AREA),\
                         index, now_page, IM_DIR, unicode)
                 
+              
         if show:
+            # plt.hist(max_length_array, bins=10, edgecolor='black')
+            # plt.title("Histogram")
+            # plt.xlabel("Page")
+            # plt.ylabel("length")
+            # plt.savefig('histogram.png')
+            # plt.show()
             key = cv2.waitKey(1)
             if key == 27:
                 cv2.destroyAllWindows()
@@ -360,6 +383,8 @@ def main(args):
     shows = [SHOW if not MULTIPROCESSING else False] * len(filePaths)
     scales = [SCALE] * len(filePaths)
     COLOR_BOOSTs = [COLOR_BOOST] * len(filePaths)
+    # max_length_arrays = [max_length_array]
+    # max_length_array = []
 
     # 監聽輸出資料夾，顯示進度條
     start_unicode = (PAGE_START - 1) * 100
@@ -395,6 +420,7 @@ if __name__ == '__main__':
     SHOW = False # 顯示切割過程
     SCALE = 20 # 電子檔設5，紙本設20
     COLOR_BOOST = True # 增加對比度，適用於紙本掃描, 但會影響速度
+    # max_length_array = []
 
     args = parse_args()
     student_id = args.id
